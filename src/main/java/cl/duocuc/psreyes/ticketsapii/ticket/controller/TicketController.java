@@ -3,12 +3,18 @@ package cl.duocuc.psreyes.ticketsapii.ticket.controller;
 import cl.duocuc.psreyes.ticketsapii.ticket.dto.TicketCreateRequest;
 import cl.duocuc.psreyes.ticketsapii.ticket.dto.TicketResponse;
 import cl.duocuc.psreyes.ticketsapii.ticket.dto.TicketUpdateRequest;
+import cl.duocuc.psreyes.ticketsapii.ticket.filter.TicketFilter;
+import cl.duocuc.psreyes.ticketsapii.ticket.model.TicketStatus;
 import cl.duocuc.psreyes.ticketsapii.ticket.service.TicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -31,8 +37,21 @@ public class TicketController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TicketResponse>> getAllTickets() {
-        return ResponseEntity.ok(ticketService.getAllTickets());
+    public ResponseEntity<Page<TicketResponse>> getTickets(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime
+                    from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            Pageable pageable
+    ) {
+        TicketFilter filter = TicketFilter.builder()
+                .status(status)
+                .category(category)
+                .from(from)
+                .to(to)
+                .build();
+        return ResponseEntity.ok(ticketService.findTickets(filter, pageable));
     }
 
     @PutMapping("/{id}")
@@ -40,7 +59,6 @@ public class TicketController {
             @PathVariable Long id,
             @Valid @RequestBody TicketUpdateRequest request) {
         return ResponseEntity.ok(ticketService.updateTicket(id, request));
-    //fdhyuscgvyusdyuvgsduvgsdu
     }
 
     @DeleteMapping("/{id}")
